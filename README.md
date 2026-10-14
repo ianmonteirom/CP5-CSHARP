@@ -75,6 +75,90 @@ A escolha não gera pontos. Documente no README do seu repositório:
 
 Não versione senhas, tokens ou connection strings sensíveis.
 
+---
+
+## Configuração e execução (implementação do grupo)
+
+### Provider escolhido
+
+**SQLite** via `Microsoft.EntityFrameworkCore.Sqlite 10.0.12`.
+
+O banco é criado automaticamente em `expensehub.db` na pasta de saída da aplicação na primeira execução.
+
+### Segredos (não versionados)
+
+Crie o arquivo `sources/ExpenseHub.Api/appsettings.Development.json` (já está no `.gitignore`) com o seguinte conteúdo:
+
+```json
+{
+  "Jwt": {
+    "Key": "<string-de-pelo-menos-32-caracteres>"
+  },
+  "AdminSeed": {
+    "Password": "<senha-com-maiuscula-numero-e-simbolo>"
+  }
+}
+```
+
+A chave JWT deve ter no mínimo 32 caracteres. A senha do admin deve atender às regras de complexidade do ASP.NET Identity (maiúscula, minúscula, dígito e símbolo, mínimo 6 caracteres).
+
+### Executar as migrações e iniciar
+
+```shell
+dotnet restore ./sources/ExpenseHub.slnx
+dotnet build ./sources/ExpenseHub.slnx
+dotnet run --project ./sources/ExpenseHub.Api/ExpenseHub.Api.csproj
+```
+
+Na primeira execução, a aplicação aplica as migrações do EF Core automaticamente e cria o usuário administrador.
+
+### Usuário administrador padrão (desenvolvimento)
+
+| Campo  | Valor                              |
+|--------|------------------------------------|
+| E-mail | `admin@expensehub.local`           |
+| Senha  | valor de `AdminSeed:Password`      |
+| Papel  | `Admin`                            |
+
+### Autenticação
+
+Todas as rotas (exceto `POST /register` e `POST /login`) exigem o cabeçalho:
+
+```
+Authorization: Bearer <token>
+```
+
+O token é obtido em `POST /login` e tem validade de 24 horas.
+
+### Roles disponíveis
+
+| Role       | Permissões                                          |
+|------------|-----------------------------------------------------|
+| Employee   | Criar, editar, submeter e visualizar próprios gastos |
+| Approver   | Aprovar ou reprovar despesas submetidas             |
+| Finance    | Registrar pagamento de despesas aprovadas           |
+| Auditor    | Visualizar todas as despesas e histórico            |
+| Admin      | Gerenciar usuários e atribuir roles                 |
+
+### Endpoints principais
+
+| Método | Rota                           | Role(s)              |
+|--------|--------------------------------|----------------------|
+| POST   | /register                      | Anônimo              |
+| POST   | /login                         | Anônimo              |
+| GET    | /api/admin/users               | Admin                |
+| PUT    | /api/admin/users/{id}/roles    | Admin                |
+| POST   | /api/expenses                  | Employee             |
+| PUT    | /api/expenses/{id}             | Employee             |
+| GET    | /api/expenses                  | Employee/Approver/Finance/Auditor |
+| GET    | /api/expenses/{id}             | Employee/Approver/Finance/Auditor |
+| POST   | /api/expenses/{id}/submit      | Employee             |
+| POST   | /api/expenses/{id}/approve     | Approver             |
+| POST   | /api/expenses/{id}/reject      | Approver             |
+| POST   | /api/expenses/{id}/pay         | Finance              |
+| GET    | /api/expenses/{id}/history     | Employee/Approver/Finance/Auditor |
+| GET    | /health                        | Anônimo              |
+
 ## Testes
 
 Somente testes unitários escritos por você entram na nota. Testes de integração, end-to-end ou de interface são permitidos, mas opcionais e sem pontuação.
