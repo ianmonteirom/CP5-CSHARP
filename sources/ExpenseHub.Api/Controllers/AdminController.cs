@@ -27,7 +27,26 @@ public class AdminController : ControllerBase
         _userManager = userManager;
     }
 
-   
+    /// <summary>Returns all registered users with their assigned roles.</summary>
+    [HttpGet("users")]
+    public async Task<ActionResult<IReadOnlyList<UserResponse>>> GetUsers(CancellationToken cancellationToken)
+    {
+        List<ApplicationUser> users = await _userManager.Users.ToListAsync(cancellationToken);
+        var responses = new List<UserResponse>(users.Count);
+
+        foreach (ApplicationUser user in users)
+        {
+            IList<string> roles = await _userManager.GetRolesAsync(user);
+            responses.Add(new UserResponse
+            {
+                Id = user.Id,
+                Email = user.Email ?? string.Empty,
+                Roles = roles.ToList().AsReadOnly()
+            });
+        }
+
+        return Ok(responses.AsReadOnly());
+    }
 
     /// <summary>Replaces a user's roles with the provided set; protects the Admin's own admin role.</summary>
     [HttpPut("users/{id}/roles")]
