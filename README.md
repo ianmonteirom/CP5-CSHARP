@@ -8,7 +8,8 @@ O prazo de entrega é **13 de outubro de 2026**. O grupo deverá implementar aut
 
 | Nome | RM |
 |------|----|
-| Ian Monteiro Moreira | <!-- seu RM aqui --> |
+| Ian Monteiro | 558652 |
+| Mauricio Alves | 556214 |
 
 ## Criar seu repositório
 
